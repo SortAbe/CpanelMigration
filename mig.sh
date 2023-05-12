@@ -1,11 +1,10 @@
 #!/bin/bash
 #4/25/2023
 #Abe Diaz
-#Version 0.8
+#Version 0.9
 #Wherever you are is where I want to be
 
 #TODO
-#1. How to check for leftover partitions
 #8. Mysql governor
 #9. cagefs which accounts
 #10. php selector
@@ -100,7 +99,8 @@ basic(){
 
 #Drive Information
 drives(){
-echo -e "${BLU}======>DRIVE STATS<======${NC}"
+	left=$(df -Th)
+	echo -e "${BLU}======>DRIVE STATS<======${NC}"
 	if smartctl --scan | grep -i "megaraid";then
 		echo -e "${RED}Hardware RAID was detected!${NC}"
 		echo "BEGIN HW DRIVE SCAN"
@@ -112,6 +112,7 @@ echo -e "${BLU}======>DRIVE STATS<======${NC}"
 		echo "END HW DRIVE SCAN"
 	fi
 	for drive in $(smartctl --scan | awk '{print $1}');do 
+		left=$(echo "$left"| egrep -v "$drive")
 		echo -e "Drive: $drive "
 		echo -e "Health:"
 		smartctl -a $drive | grep "^  1\|^  5\|^ 10\|^184\|^187\|^188\|^196\|^197\|^198\|^201"
@@ -121,6 +122,8 @@ echo -e "${BLU}======>DRIVE STATS<======${NC}"
 		echo "Inode usage:"
 		df -ih | egrep "$drive" | awk '{print $1": "$5}'
 	done
+	echo "LEFT OVER PARTITIONS:"
+	echo "$left"
 }
 
 #Versions
