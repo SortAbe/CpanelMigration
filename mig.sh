@@ -21,7 +21,7 @@ Date=$(date '+%m-%d-%y')
 #Preliminary
 #Check if sudo
 if [ "$EUID" -ne 0 ];then 
-	echo "${RED}Not root!${NC}" 1>&2
+	echo -e "${RED}Not root!${NC}" 1>&2
 	exit 1
 fi
 
@@ -65,7 +65,7 @@ basic(){
 			echo -e "$(cat /etc/redhat*release)"
 		fi
 	else
-		echo "Unsupported OS!"
+		echo -e "${RED}Unsupported OS!${NC}"
 		exit 1 1>&2
 	fi
 
@@ -106,15 +106,15 @@ drives(){
 		echo "BEGIN HW DRIVE SCAN"
 		for drive in $(smartctl --scan | egrep -i "megaraid" | awk '{print $3}');do 
 			echo -e "Drive: $drive "
-			echo -e "Health:"
+			echo "Health:"
 			smartctl -a -d $drive /dev/sda | grep "^  1\|^  5\|^ 10\|^184\|^187\|^188\|^196\|^197\|^198\|^201"
 		done
 		echo "END HW DRIVE SCAN"
 	fi
 	for drive in $(smartctl --scan | awk '{print $1}');do 
-		left=$(echo "$left"| egrep -v "$drive")
+		left=$(echo -e "$left"| egrep -v "$drive")
 		echo -e "Drive: $drive "
-		echo -e "Health:"
+		echo "Health:"
 		smartctl -a $drive | grep "^  1\|^  5\|^ 10\|^184\|^187\|^188\|^196\|^197\|^198\|^201"
 		echo -e "\nParitions"
 		echo "Usage:"
@@ -131,31 +131,31 @@ drives(){
 versions(){
 	echo -e "${BLU}======>VERSIONS<======${NC}"
 	if  lsof -i TCP:443 | grep -iq "httpd" || lsof -i TCP:80 | grep -iq "httpd" ;then
-		echo -e "Apache is running\n"
+		echo "Apache is running\n"
 		httpd -v 2>/dev/null || apache2 -v 2>/dev/null
 	fi
 	if  lsof -i TCP:443 | grep -iq "nginx" || lsof -i TCP:80 | grep -iq "nginx" ;then
-		echo -e "Nginx is running\n"
+		echo "Nginx is running\n"
 		nginx -v
 	fi
 	if  lsof -i TCP:443 | grep -iq "lshttp" || lsof -i TCP:80 | grep -iq "lshttp" ;then
-		echo -e "LiteSpeed is running\n"
+		echo "LiteSpeed is running\n"
 		lshttpd -v
 	fi
 	if ps aux | grep -v "grep" | egrep -qi "bin.mysql|bin.mariadb";then
-		echo -e "MySQL/MariaDB is running\n"
+		echo "MySQL/MariaDB is running\n"
 		mysql --version
 	fi
 	if ps aux | grep -v "grep" | egrep -qi "bin.psql";then
-		echo -e "PostgreSQL is running\n"
+		echo "PostgreSQL is running\n"
 		postgres -V
 	fi
 	if ps aux | grep -v "grep" | egrep -qi "bin.mongo"; then
-		echo -e "MongoDB is running\n"
+		echo "MongoDB is running\n"
 		mongod -version
 	fi
 	if ps aux | grep -v "grep" | egrep -qi "bin.kcar"; then
-		echo -e "KernelCare is running\n"
+		echo "KernelCare is running\n"
 		kcarectl --info
 	fi
 }
@@ -182,8 +182,8 @@ accounts(){
 		if [[ $assl -eq "1" ]];then
 			echo -e "${GRE}SSL redirect enabled${NC}"
 			curlout=$(curl -svL $adom 2>&1)
-	        if echo $curlout | egrep -q "SSL certificate verify ok";then
-				echo -e "${GRE}$adom SSL is good, expires: $(echo $curlout | egrep -o "expire date:.+20[0-9]{2} [A-Z]{2,4}" | sed 's/expire date://' )${NC}"
+	        if echo "$curlout" | egrep -q "SSL certificate verify ok";then
+				echo -e "${GRE}$adom SSL is good, expires: $(echo "$curlout" | egrep -o "expire date:.+20[0-9]{2} [A-Z]{2,4}" | sed 's/expire date://' )${NC}"
 			else
 				echo -e "${RED}$adom SSL not working${NC}"
 			fi
@@ -213,8 +213,8 @@ accounts(){
 			if [[ $sssl -eq "1" ]];then
 				echo -e "${GRE}SSL redirect enabled${NC}"
 				scurlout=$(curl -svL $asub 2>&1)
-				if echo $scurlout | egrep -q "SSL certificate verify ok";then
-					echo -e "${GRE}$asub SSL is good, expires: $(echo $scurlout | egrep -o "expire date:.+20[0-9]{2} [A-Z]{2,4}" | sed 's/expire date://' )${NC}"
+				if echo "$scurlout" | egrep -q "SSL certificate verify ok";then
+					echo -e "${GRE}$asub SSL is good, expires: $(echo "$scurlout" | egrep -o "expire date:.+20[0-9]{2} [A-Z]{2,4}" | sed 's/expire date://' )${NC}"
 				else
 					echo -e "${RED}$asub SSL not working${NC}"
 				fi
@@ -248,9 +248,9 @@ database(){
 	echo -e "Databse location: $ddir"
 	dsize=$(du -s $ddir | awk '{print $1}')
 	if [[ $dsize -gt 20000000 ]];then
-		echo -e "Database Size:${RED} $(echo $dsize | awk '$1/1024 > 1000{printf "%.2fGB\n", $1/(1000*1024)}$1/1024 < 1000{printf "%.2fMB\n", $1/1024}')"
+		echo -e "Database Size:${RED} $(echo "$dsize" | awk '$1/1024 > 1000{printf "%.2fGB\n", $1/(1000*1024)}$1/1024 < 1000{printf "%.2fMB\n", $1/1024}')"
 	else
-		echo -e "Database Size:${GRE} $(echo $dsize | awk '$1/1024 > 1000{printf "%.2fGB\n", $1/(1000*1024)}$1/1024 < 1000{printf "%.2fMB\n", $1/1024}')"
+		echo -e "Database Size:${GRE} $(echo "$dsize" | awk '$1/1024 > 1000{printf "%.2fGB\n", $1/(1000*1024)}$1/1024 < 1000{printf "%.2fMB\n", $1/1024}')"
 	fi
 	for db in $(mysql -e "SHOW DATABASES;"| awk 'NR != 1 && $1 != "information_schema" && $1 != "performance_schema" && $1 != "mysql" && $1 != "sys"{print $1}');do
 		echo -e "${YLW}++++++$db++++++${NC}"
