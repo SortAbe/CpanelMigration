@@ -121,6 +121,7 @@ drives(){
 		df -Th | egrep "$drive" | awk '{printf "%s: Type: %s Size: %s Used: %s %s Free: %s Mnt: %s\n", $1 , $2, $3, $4, $6, $5, $7}'	
 		echo "Inode usage:"
 		df -ih | egrep "$drive" | awk '{print $1": "$5}'
+		echo
 	done
 	echo "LEFT OVER PARTITIONS:"
 	echo "$left"
@@ -255,9 +256,9 @@ database(){
 		echo -e "${YLW}++++++$db++++++${NC}"
 		for tb in $(mysql -e "SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA LIKE \"$db\";" | awk 'NR != 1 {print $1}');do
 			if mysql -e "SELECT * FROM $db.$tb LIMIT 10;" &>/dev/null;then
-				echo -e "Database: $db Table: $tb ${GRE}reads${NC}"
+				echo -e "Database: $db Table: $tb ${GRE}good${NC}"
 			else
-				echo -e "Database: $db Table: $tb  ${RED}not read${NC}"
+				echo -e "Database: $db Table: $tb  ${RED}bad${NC}"
 			fi
 		done
 	done 
@@ -272,7 +273,7 @@ config(){
 		echo -e "++++++$php Handler++++++"
 		whmapi1  php_get_handlers | egrep -B 1 "$php" | grep "current_handler:" | awk '{print $2}'
 		echo -e "++++++$php Modules++++++" >> php.modules
-		/opt/cpanel/$php/root/usr/bin/php -m | egrep "^[a-zA-Z]" >> php.modules
+		/opt/cpanel/$php/root/usr/bin/php -m | egrep "^[a-zA-Z]" | tee -a php.modules
 	done
 }
 
