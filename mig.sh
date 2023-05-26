@@ -196,7 +196,7 @@ accounts(){
         echo -e "A record: $(dig @8.8.8.8 A $adom +short | paste -sd" ")"
         echo -e "NS record: $(dig @8.8.8.8 NS $adom +short | paste -sd" ")"
 		#Account subdomains
-		for asub in $(grep grep "^  - " /var/cpanel/userdata/$acc/main | awk '{print $2}');do
+		for asub in $(grep "^  - " /var/cpanel/userdata/$acc/main | awk '{print $2}');do
 			shome=$(grep "documentroot:" /var/cpanel/userdata/$acc/$asub | awk '{print $2}')
 			sssl=$(grep "ssl_redirect:" /var/cpanel/userdata/$acc/$asub | awk '{print $2}')
 			sphp=$(grep "phpversion:" /var/cpanel/userdata/$acc/$asub | awk '{print $2}')
