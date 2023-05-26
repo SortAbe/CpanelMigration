@@ -269,6 +269,8 @@ config(){
 	cp /etc/my.cnf ./my.cnf.back
 	echo -e "${BLU}======>PHP<======${NC}"
 	for php in $(ls /opt/cpanel | grep php);do
+		echo -e "++++++$php Handler++++++"
+		whmapi1  php_get_handlers | egrep -B 1 "$php" | grep "current_handler:" | awk '{print $2}'
 		echo -e "++++++$php Modules++++++" >> php.modules
 		/opt/cpanel/$php/root/usr/bin/php -m | egrep "^[a-zA-Z]" >> php.modules
 	done
