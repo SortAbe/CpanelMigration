@@ -236,7 +236,7 @@ database(){
 	if mysql -e "SHOW DATABASES;" &>/dev/null;then
 		:
 	else
-		echo "${RED}MySQL/MariaDB not active or not accsseible via root without password. Skipping database checking!${NC}" 1>&2
+		echo -e "${RED}MySQL/MariaDB not active or not accsseible via root without password. Skipping database checking!${NC}" 1>&2
 		return
 	fi
 	if grep -q "datadir=" /etc/my.cnf;then
