@@ -269,9 +269,10 @@ config(){
 	/usr/local/cpanel/bin/cpconftool --modules=cpanel::smtp::exim,cpanel::system::backups,cpanel::system::whmconf,cpanel::easy::apache, --backup
 	cp /etc/my.cnf ./my.cnf.back
 	echo -e "${BLU}======>PHP<======${NC}"
-	for php in $(ls /opt/cpanel | grep php);do
+	for php in $(whmapi1  php_get_handlers | grep "version:" | awk '{print $2}');do
 		echo -e "++++++$php Handler++++++"
 		whmapi1  php_get_handlers | egrep -B 1 "$php" | grep "current_handler:" | awk '{print $2}'
+		if echo -e "$php" | grep -q "alt-php";then continue ;fi
 		echo -e "++++++$php Modules++++++" >> php.modules
 		/opt/cpanel/$php/root/usr/bin/php -m  2>/dev/null | egrep "^[a-zA-Z]" | tee -a php.modules
 	done
