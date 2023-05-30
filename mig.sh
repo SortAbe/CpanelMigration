@@ -273,7 +273,7 @@ config(){
 		echo -e "++++++$php Handler++++++"
 		whmapi1  php_get_handlers | egrep -B 1 "$php" | grep "current_handler:" | awk '{print $2}'
 		echo -e "++++++$php Modules++++++" >> php.modules
-		/opt/cpanel/$php/root/usr/bin/php -m | egrep "^[a-zA-Z]" | tee -a php.modules
+		/opt/cpanel/$php/root/usr/bin/php -m  2>/dev/null | egrep "^[a-zA-Z]" | tee -a php.modules
 	done
 }
 
