@@ -321,11 +321,11 @@ database(){
 		echo -e "Database Size:${GRE} $(echo "$dsize" | awk '$1/1024 > 1000{printf "%.2fGB\n", $1/(1000*1024)}$1/1024 < 1000{printf "%.2fMB\n", $1/1024}')"
 	fi
 	for db in $(mysql -e "SHOW DATABASES;"| awk 'NR != 1 && $1 != "information_schema" && $1 != "performance_schema" && $1 != "mysql" && $1 != "sys"{print $1}');do
-		echo -e "${YLW}++++++$db++++++${NC}"
 		for tb in $(mysql -e "SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA LIKE \"$db\";" | awk 'NR != 1 {print $1}');do
 			if mysql -e "SELECT * FROM $db.$tb LIMIT 10;" &>/dev/null;then
-				echo -e "Database: $db Table: $tb ${GRE}good${NC}"
+				echo -e "Database: $db Table: $tb ${GRE}good${NC}" >> database.info
 			else
+				echo -e "${YLW}++++++$db++++++${NC}"
 				echo -e "Database: $db Table: $tb  ${RED}bad${NC}"
 			fi
 		done
