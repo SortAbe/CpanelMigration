@@ -5,9 +5,6 @@
 #Wherever you are is where I want to be
 
 #TODO
-#8. Mysql governor
-#9. cagefs which accounts
-#10. php selector
 #cl logic check /var/cagefs/*/*/etc/cl.selector | /var/cagefs/*/*/etc/cl.php.d
 
 #Global variables
@@ -162,6 +159,77 @@ versions(){
 
 #DOMAINS
 accounts(){
+	echo -e "${BLU}======>DOMAINS<======${NC}" | tee -a accounts.info
+	for acc in $(/usr/local/cpanel/bin/whmapi1 --output=jsonpretty   listaccts 2>/dev/null | grep user | awk '{print $3}' | sed 's/[",]//g');do
+		adom=$(/usr/local/cpanel/bin/whmapi1 accountsummary user=$acc 2>/dev/null | grep "domain:" | awk '{print $2}')
+        aip=$(/usr/local/cpanel/bin/whmapi1 accountsummary user=$acc 2>/dev/null | grep "ip:" | awk '{print $2}')
+        asus=$(/usr/local/cpanel/bin/whmapi1 accountsummary user=$acc 2>/dev/null | grep " suspended:" | awk '{print $2}')
+		ahome=$(grep "documentroot:" /var/cpanel/userdata/$acc/$adom | awk '{print $2}')
+		assl=$(grep "ssl_redirect:" /var/cpanel/userdata/$acc/$adom | awk '{print $2}')
+		aphp=$(grep "phpversion:" /var/cpanel/userdata/$acc/$adom | awk '{print $2}')
+        echo -e "${GRE}++++++$acc++++++${NC}" >> 
+		#Load
+        if curl -sIL $adom | egrep -q "HTTP.{3,5} 200 OK";then
+            echo -e "${GRE}$adom loads 200${NC}" >> accounts.info
+        else
+			echo -e "${YLW}====>Main: $adom${NC}" | tee -a accounts.info
+            echo -e "${RED}$adom did not load${NC}"| tee -a accounts.info
+        fi
+		#SSL
+		if [[ $assl -eq "1" ]];then
+			echo -e "${GRE}SSL redirect enabled${NC}" >> accounts.info
+			curlout=$(curl -svL $adom 2>&1)
+	        if echo "$curlout" | egrep -q "SSL certificate verify ok";then
+				echo -e "${GRE}$adom SSL is good, expires: $(echo "$curlout" | egrep -o "expire date:.+20[0-9]{2} [A-Z]{2,4}" | sed 's/expire date://' )${NC}" >> accounts.info
+			else
+				echo -e "${RED}$adom SSL not working${NC}"| tee -a accounts.info
+			fi
+		else
+			echo -e "${RED}SSL redirect disabled${NC}"| tee -a accounts.info
+		fi
+		#PHP
+		echo -e "PHP version: $aphp" >> accounts.info
+		#DNS
+		echo -e "Domain Cpanel IP: $aip" >> accounts.info
+        echo -e "A record: $(dig @8.8.8.8 A $adom +short | paste -sd" ")" >> accounts.info
+        echo -e "NS record: $(dig @8.8.8.8 NS $adom +short | paste -sd" ")" >> accounts.info
+		#Account subdomains
+		for asub in $(grep "^  - " /var/cpanel/userdata/$acc/main | awk '{print $2}');do
+			shome=$(grep "documentroot:" /var/cpanel/userdata/$acc/$asub | awk '{print $2}')
+			sssl=$(grep "ssl_redirect:" /var/cpanel/userdata/$acc/$asub | awk '{print $2}')
+			sphp=$(grep "phpversion:" /var/cpanel/userdata/$acc/$asub | awk '{print $2}')
+			sip=$(grep "ip:" /var/cpanel/userdata/$acc/$adom | awk '{print $2}')
+			#Load
+			if curl -sIL $asub | egrep -q "HTTP.{3,5} 200 OK";then
+				echo -e "${GRE}$asub loads 200${NC}" >> accounts.info
+			else
+				echo -e "${YLW}====>Sub: $asub${NC}"| tee -a accounts.info
+				echo -e "${RED}$asub did not load${NC}"| tee -a accounts.info
+			fi
+			#SSL
+			if [[ $sssl -eq "1" ]];then
+				echo -e "${GRE}SSL redirect enabled${NC}" >> accounts.info
+				scurlout=$(curl -svL $asub 2>&1)
+				if echo "$scurlout" | egrep -q "SSL certificate verify ok";then
+					echo -e "${GRE}$asub SSL is good, expires: $(echo "$scurlout" | egrep -o "expire date:.+20[0-9]{2} [A-Z]{2,4}" | sed 's/expire date://' )${NC}" >> accounts.info
+				else
+					echo -e "${RED}$asub SSL not working${NC}"| tee -a accounts.info
+				fi
+			else
+				echo -e "${RED}SSL redirect disabled${NC}"| tee -a accounts.info
+			fi
+			#PHP
+			echo -e "PHP version: $sphp" >> accounts.info
+			#DNS
+			echo -e "Domain Cpanel IP: $aip" >> accounts.info
+			echo -e "A record: $(dig @8.8.8.8 A $asub +short | paste -sd" ")" >> accounts.info
+			echo -e "NS record: $(dig @8.8.8.8 NS $asub +short | paste -sd" ")" >> accounts.info
+		done
+	done  
+}
+
+#DOMAINS Extensive
+accounts_ext(){
 	echo -e "${BLU}======>DOMAINS<======${NC}"
 	for acc in $(/usr/local/cpanel/bin/whmapi1 --output=jsonpretty   listaccts 2>/dev/null | grep user | awk '{print $3}' | sed 's/[",]//g');do
 		adom=$(/usr/local/cpanel/bin/whmapi1 accountsummary user=$acc 2>/dev/null | grep "domain:" | awk '{print $2}')
@@ -284,7 +352,7 @@ if [[ $1 == "" ]];then
 	config
 	drives | tee -a drive.info
 	versions | tee -a versions.info
-	accounts | tee -a accounts.info
+	accounts 
 	database | tee -a database.info
 	exit
 fi
@@ -297,12 +365,12 @@ while getopts "asdh" opt; do
 			config
 			drives | tee -a drive.info
 			versions | tee -a versions.info
-			accounts | tee -a accounts.info
+			accounts 
 			database | tee -a database.info
 			;;
 		s)
-			accounts | tee -a accounts.info
-			;;
+			account_ext
+			;
 		d)
 			database | tee -a accounts.info
 			;;
@@ -310,7 +378,7 @@ while getopts "asdh" opt; do
 			cat << EOF
 	-a All checks, same as no argument.
 
-	-s Check only domains.
+	-s Check only domains(extensive output)
 
 	-d Check only databases.
 
