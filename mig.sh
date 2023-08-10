@@ -169,7 +169,7 @@ accounts(){
                 aphp=$(grep "phpversion:" /var/cpanel/userdata/$acc/$adom | awk '{print $2}')
         echo -e "${GRE}++++++$acc++++++${NC}"
                 #Load
-        if curl -sIL $adom | egrep -q "HTTP.{3,5} 200 OK";then
+        if curl -vL $adom 2>&1 | egrep -q "HTTP.{2,5} 200";then
             echo -e "${GRE}$adom loads 200${NC}" >> accounts.info
         else
                         echo -e "${YLW}====>Main: $adom${NC}" | tee -a accounts.info
@@ -200,7 +200,7 @@ accounts(){
                         sphp=$(grep "phpversion:" /var/cpanel/userdata/$acc/$asub | awk '{print $2}')
                         sip=$(grep "ip:" /var/cpanel/userdata/$acc/$adom | awk '{print $2}')
                         #Load
-                        if curl -sIL $asub | egrep -q "HTTP.{3,5} 200 OK";then
+						if curl -vL $asub 2>&1 | egrep -q "HTTP.{2,5} 200";then
                                 echo -e "${GRE}$asub loads 200${NC}" >> accounts.info
                         else
                                 echo -e "${YLW}====>Sub: $asub${NC}"| tee -a accounts.info
@@ -241,7 +241,7 @@ accounts_ext(){
         echo -e "${GRE}++++++$acc++++++${NC}"
                 #Load
                 echo -e "${YLW}====>Main: $adom${NC}"
-        if curl -sIL $adom | egrep -q "HTTP.{3,5} 200 OK";then
+		if curl -vL $adom 2>&1 | egrep -q "HTTP.{2,5} 200";then
             echo -e "${GRE}$adom loads 200${NC}"
         else
             echo -e "${RED}$adom did not load${NC}"
@@ -272,7 +272,7 @@ accounts_ext(){
                         sip=$(grep "ip:" /var/cpanel/userdata/$acc/$adom | awk '{print $2}')
                         #Load
                         echo -e "${YLW}====>Sub: $asub${NC}"
-                        if curl -sIL $asub | egrep -q "HTTP.{3,5} 200 OK";then
+						if curl -vL $asub 2>&1 | egrep -q "HTTP.{2,5} 200";then
                                 echo -e "${GRE}$asub loads 200${NC}"
                         else
                                 echo -e "${RED}$asub did not load${NC}"
@@ -369,8 +369,8 @@ while getopts "asdh" opt; do
                         database | tee -a database.info
                         ;;
                 s)
-                        account_ext
-                        ;
+                        account
+                        ;;
                 d)
                         database | tee -a accounts.info
                         ;;
