@@ -28,4 +28,3 @@ The script will generate a detailed report with the following sections:
 All the data will be stored in a directory named ~/migration-<DATE>.
 Notes
 
-This script is a work in progress, and there are some TODO items that are not yet implemented, such as checking for leftover partitions, MySQL governor, and CageFS account information.
