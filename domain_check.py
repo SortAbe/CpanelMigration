@@ -109,7 +109,7 @@ class Domain_checker:
         for domain in self.domain_list:
             try:
                 self.check(domain, requests.get('http://' + domain, timeout=5, verify=False))
-            except ConnectionError:
+            except requests.exceptions.ConnectionError:
                 try:
                     ip = socket.gethostbyname(domain)
                     message: str = (domain + self.RED + ' located in ' + ip + ', did not respond.' + self.END)

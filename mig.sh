@@ -154,6 +154,10 @@ versions(){
     fi
 }
 
+domain_check(){
+    ~/CpanelMigration/domain_check.py
+}
+
 #DOMAINS
 accounts(){
     echo -e "${BLU}======>DOMAINS<======${NC}" | tee -a accounts.info
@@ -341,7 +345,7 @@ if [[ $1 == "" ]];then
     config
     drives | tee -a drive.info
     versions | tee -a versions.info
-    accounts
+    domain_check
     database | tee -a database.info
     exit
 fi
@@ -354,11 +358,11 @@ while getopts "asdh" opt; do
             config
             drives | tee -a drive.info
             versions | tee -a versions.info
-            accounts
+            domain_check
             database | tee -a database.info
             ;;
         s)
-            account
+            domain_check
             ;;
         d)
             database | tee -a accounts.info
