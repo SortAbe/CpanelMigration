@@ -331,10 +331,10 @@ config(){
     cp /etc/my.cnf ./my.cnf.back
     echo -e "${BLU}======>PHP<======${NC}"
     for php in $(whmapi1  php_get_handlers 2>/dev/null | grep "version: .*php" | gawk '{print $2}');do
-        printf "%s Handler" "$php"
+        printf "%s Handler " "$php"
         whmapi1  php_get_handlers  2>/dev/null | grep -E  -B 1 "$php" | grep "current_handler:" | gawk '{print $2}'
         if echo -e "$php" | grep -q "alt-php";then continue ;fi
-        echo -e "_________$(php)_________" >> php.modules
+        echo -e "====== $php =====" >> php.modules
         /opt/cpanel/"$php"/root/usr/bin/php -m  2>/dev/null | grep -E  "^[a-zA-Z]" >> php.modules
     done
 }
