@@ -30,10 +30,10 @@ fi
 basic(){
     #Create directory for all relevant data
     if [[ -d "$HOME/migration-$Date" ]];then
-        cd ~/migration-"$Date" || exit 1
+        cd ./migration-"$Date" || exit 1
     else
-        mkdir ~/migration-"$Date"
-        cd ~/migration-"$Date" || exit 1
+        mkdir ./migration-"$Date"
+        cd ./migration-"$Date" || exit 1
     fi
 
     #Check OS
@@ -155,7 +155,8 @@ versions(){
 }
 
 domain_check(){
-    ~/CpanelMigration/domain_check.py
+    echo -e "${BLU}======>DOMAINS<======${NC}" | tee -a accounts.info
+    ~/CpanelMigration/domain_check.py | tee -a accounts.info
 }
 
 #DOMAINS
@@ -341,7 +342,7 @@ config(){
 
 if [[ $1 == "" ]];then
     basic
-    cd ~/migration-"$Date" || exit 1
+    cd ./migration-"$Date" || exit 1
     config
     drives | tee -a drive.info
     versions | tee -a versions.info
@@ -354,7 +355,7 @@ while getopts "asdh" opt; do
     case $opt in
         a)
             basic
-            cd ~/migration-"$Date" || exit 1
+            cd ./migration-"$Date" || exit 1
             config
             drives | tee -a drive.info
             versions | tee -a versions.info
