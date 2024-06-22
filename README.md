@@ -6,6 +6,8 @@ Prerequisites
 
     The script must be run as the root user
     cPanel must be installed
+    Ptyhon3.6+
+    Python3 Requests library
 
 Usage
 
@@ -27,4 +29,3 @@ The script will generate a detailed report with the following sections:
 
 All the data will be stored in a directory named ~/migration-<DATE>.
 Notes
-

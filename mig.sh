@@ -29,7 +29,7 @@ fi
 
 basic(){
     #Create directory for all relevant data
-    if [[ -d "$HOME/migration-$Date" ]];then
+    if [[ -d "./migration-$Date" ]];then
         cd ./migration-"$Date" || exit 1
     else
         mkdir ./migration-"$Date"
@@ -342,7 +342,6 @@ config(){
 
 if [[ $1 == "" ]];then
     basic
-    cd ./migration-"$Date" || exit 1
     config
     drives | tee -a drive.info
     versions | tee -a versions.info
@@ -355,7 +354,6 @@ while getopts "asdh" opt; do
     case $opt in
         a)
             basic
-            cd ./migration-"$Date" || exit 1
             config
             drives | tee -a drive.info
             versions | tee -a versions.info
