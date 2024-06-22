@@ -11,9 +11,9 @@ Prerequisites
 
 Usage
 
-    Copy the entire script into a new file, e.g., cpanel_migration.sh.
-    Make the script executable: chmod +x cpanel_migration.sh
-    Run the script: ./cpanel_migration.sh
+    Verify you have Python3.6 + installed
+    Verify that requests library is installed for Python3
+    Run the script: bash mig.sh
 
 Output
 
