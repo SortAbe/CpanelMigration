@@ -27,5 +27,4 @@ The script will generate a detailed report with the following sections:
     Domains
     Databases
 
-All the data will be stored in a directory named ~/migration-<DATE>.
-Notes
+All the data will be stored in a directory named ./migration-DATE.
