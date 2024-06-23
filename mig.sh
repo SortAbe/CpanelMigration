@@ -1,7 +1,7 @@
 #!/bin/bash
 #4/25/2023
 #Abe Diaz
-#Version 0.9
+#Version 0.95
 #Wherever you are is where I want to be
 
 #Global variables
@@ -64,36 +64,42 @@ basic(){
     fi
 
     #VM check
-    isVirt=false
+    virtual_machine=false
     if dmidecode -s system-manufacturer | grep -Eqi "innotek|GmbH|QEMU";then
-        isVirt=true
+        virtual_machine=true
     fi
     if dmidecode -s system-product-name | grep -Eqi "Virtual|Standard PC";then
-        isVirt=true
+        virtual_machine=true
     fi
     if lscpu | grep -Eqi "Hypervisor vendor: [a-z]+";then
-        isVirt=true
+        virtual_machine=true
     fi
     if lshw -class system | grep -Eqi "innotek|GmbH|QEMU";then
-        isVirt=true
+        virtual_machine=true
     fi
-    if $isVirt;then
+    if $virtual_machine;then
         echo -e "${RED}Virtual Machine has been detected!${NC}"
     fi
 
     #Install tools
     if [[ $os = "ubuntu" ]];then
-        apt update -y &>/dev/null && apt install smartmontools dmidecode lshw util-linux &>/dev/null
+        apt update -y &>/dev/null && apt install smartmontools dmidecode lshw util-linux -y &>/dev/null
         elif [ "$os" = "almalinux" ] || [ "$os" = "centos" ] || [ "$os" = "rockylinux" ] || [ "$os" = "cloudlinux" ];then
-        yum install smartmontools dmidecode lswh util-linux -y &>/dev/null
+        yum install smartmontools -y &>/dev/null
+        yum install dmidecode -y &>/dev/null
+        yum install lswh -y &>/dev/null
+        yum install util-linux -y &>/dev/null
     else
-        dnf install smartmontools dmidecode lshw util-linux -y &>/dev/null
+        dnf install smartmontools -y &>/dev/null
+        dnf install dmidecode -y &>/dev/null
+        dnf install lswh -y &>/dev/null
+        dnf install util-linux -y &>/dev/null
     fi
 }
 
 #Drive Information
 drives(){
-    left=$(df -Th)
+    remaining=$(df -Th)
     echo -e "${BLU}======>DRIVE STATS<======${NC}"
     if smartctl --scan | grep -i "megaraid";then
         echo -e "${RED}Hardware RAID was detected!${NC}"
@@ -106,7 +112,7 @@ drives(){
         echo "END HW DRIVE SCAN"
     fi
     for drive in $(smartctl --scan | gawk '{print $1}');do
-        left=$(echo -e "$left"| grep -E  -v "$drive")
+        remaining=$(echo -e "$remaining"| grep -E  -v "$drive")
         echo -e "Drive: $drive "
         echo "Health:"
         smartctl -a "$drive" | grep "^  1\|^  5\|^ 10\|^184\|^187\|^188\|^196\|^197\|^198\|^201"
@@ -117,39 +123,43 @@ drives(){
         df -ih | grep -E  "$drive" | gawk '{print $1": "$5}'
         echo
     done
-    echo "LEFT OVER PARTITIONS:"
-    echo "$left" | grep -v "tempfs"
+    echo "REMAINING PARTITIONS:"
+    echo "$remaining" | grep -v "tempfs"
 }
 
 #Versions
 versions(){
     echo -e "${BLU}======>VERSIONS<======${NC}"
     if  lsof -i TCP:443 | grep -iq "httpd" || lsof -i TCP:80 | grep -iq "httpd" ;then
-        echo -e "\nApache is running"
+        echo -e "Apache is running\n"
         httpd -v 2>/dev/null || apache2 -v 2>/dev/null
     fi
     if  lsof -i TCP:443 | grep -iq "nginx" || lsof -i TCP:80 | grep -iq "nginx" ;then
-        echo -e "\nNginx is running"
+        echo -e "Nginx is running\n"
         nginx -v
     fi
     if  lsof -i TCP:443 | grep -iq "lshttp" || lsof -i TCP:80 | grep -iq "lshttp" ;then
-        echo -e "\nLiteSpeed is running"
+        echo -e "LiteSpeed is running\n"
         lshttpd -v
     fi
-    if pgrep -i "mysql\|MariaDB" &>/dev/null;then
-        echo -e "\nMySQL/MariaDB is running"
-        mysql --version
+    if pgrep -i "mysql" &>/dev/null;then
+        echo -e "MySQL or MariaDB is running\n"
+        mysql --version || mariadb --version
+    fi
+    if pgrep -i "mariadb" &>/dev/null;then
+        echo -e "MariaDB is running\n"
+        mysql --version || mariadb --version
     fi
     if pgrep -i "psql" &>/dev/null;then
-        echo -e "\nPostgreSQL is running"
+        echo -e "PostgreSQL is running\n"
         postgres -V
     fi
     if pgrep -i "mongo" &>/dev/null; then
-        echo -e "\nMongoDB is running"
+        echo -e "MongoDB is running\n"
         mongod -version
     fi
     if pgrep -i "kcar" &>/dev/null;then
-        echo -e "\nKernelCare is running"
+        echo -e "KernelCare is running\n"
         kcarectl --info
     fi
 }
@@ -299,20 +309,20 @@ database(){
     if mysql -e "SHOW DATABASES;" &>/dev/null;then
         :
     else
-        echo -e "${RED}MySQL/MariaDB not active or not accsseible via root without password. Skipping database checking!${NC}" 1>&2
+        echo -e "${RED}MySQL/MariaDB is not active or not accsseible via root without password. Skipping database checking!${NC}" 1>&2
         return
     fi
     if grep -q "datadir=" /etc/my.cnf;then
-        ddir=$(grep "datadir=" /etc/my.cnf | gawk -F= '{print $2}')
+        data_directory=$(grep "datadir=" /etc/my.cnf | gawk -F= '{print $2}')
     else
-        ddir="/var/lib/mysql"
+        data_directory="/var/lib/mysql"
     fi
-    echo -e "Databse location: $ddir"
-    dsize=$(du -s "$ddir" | gawk '{print $1}')
-    if [[ $dsize -gt 20000000 ]];then
-        echo -e "Database Size:${RED} $(echo "$dsize" | gawk ' $1/1024 > 1000{printf "%.2fGB\n", $1/(1000*1024)} $1/1024 < 1000{printf "%.2fMB\n", $1/1024}')${NC}"
+    echo -e "Databse location: $data_directory"
+    directory_size=$(du -s "$data_directory" | gawk '{print $1}')
+    if [[ $directory_size -gt 20000000 ]];then
+        echo -e "Database Size:${RED} $(echo "$directory_size" | gawk ' $1/1024 > 1000{printf "%.2fGB\n", $1/(1000*1024)} $1/1024 < 1000{printf "%.2fMB\n", $1/1024}')${NC}"
     else
-        echo -e "Database Size:${GRE} $(echo "$dsize" | gawk ' $1/1024 > 1000{printf "%.2fGB\n", $1/(1000*1024)} $1/1024 < 1000{printf "%.2fMB\n", $1/1024}')${NC}"
+        echo -e "Database Size:${GRE} $(echo "$directory_size" | gawk ' $1/1024 > 1000{printf "%.2fGB\n", $1/(1000*1024)} $1/1024 < 1000{printf "%.2fMB\n", $1/1024}')${NC}"
     fi
     for db in $(mysql -e "SHOW DATABASES;"| gawk 'NR != 1 && $1 != "information_schema" && $1 != "performance_schema" && $1 != "mysql" && $1 != "sys"{print $1}');do
         for tb in $(mysql -e "SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA LIKE \"$db\";" | gawk 'NR != 1 {print $1}');do
