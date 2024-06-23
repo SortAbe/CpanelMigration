@@ -84,16 +84,20 @@ basic(){
     #Install tools
     if [[ $os = "ubuntu" ]];then
         apt update -y &>/dev/null && apt install smartmontools dmidecode lshw util-linux -y &>/dev/null
-        elif [ "$os" = "almalinux" ] || [ "$os" = "centos" ] || [ "$os" = "rockylinux" ] || [ "$os" = "cloudlinux" ];then
+    elif [ "$os" = "almalinux" ] || [ "$os" = "centos" ] || [ "$os" = "rockylinux" ] || [ "$os" = "cloudlinux" ];then
         yum install smartmontools -y &>/dev/null
         yum install dmidecode -y &>/dev/null
         yum install lswh -y &>/dev/null
         yum install util-linux -y &>/dev/null
+        yum install python3 -y &>/dev/null
+        pip3 install requests &>/dev/null
     else
         dnf install smartmontools -y &>/dev/null
         dnf install dmidecode -y &>/dev/null
         dnf install lswh -y &>/dev/null
         dnf install util-linux -y &>/dev/null
+        dnf install python3 -y &>/dev/null
+        pip3 install requests &>/dev/null
     fi
 }
 
@@ -131,36 +135,44 @@ drives(){
 versions(){
     echo -e "${BLU}======>VERSIONS<======${NC}"
     if  lsof -i TCP:443 | grep -iq "httpd" || lsof -i TCP:80 | grep -iq "httpd" ;then
-        echo -e "Apache is running\n"
+        echo -e "Apache is running"
         httpd -v 2>/dev/null || apache2 -v 2>/dev/null
+        echo
     fi
     if  lsof -i TCP:443 | grep -iq "nginx" || lsof -i TCP:80 | grep -iq "nginx" ;then
-        echo -e "Nginx is running\n"
+        echo -e "Nginx is running"
         nginx -v
+        echo
     fi
     if  lsof -i TCP:443 | grep -iq "lshttp" || lsof -i TCP:80 | grep -iq "lshttp" ;then
-        echo -e "LiteSpeed is running\n"
+        echo -e "LiteSpeed is running"
         lshttpd -v
+        echo
     fi
     if pgrep -i "mysql" &>/dev/null;then
-        echo -e "MySQL or MariaDB is running\n"
+        echo -e "MySQL or MariaDB is running"
         mysql --version || mariadb --version
+        echo
     fi
     if pgrep -i "mariadb" &>/dev/null;then
-        echo -e "MariaDB is running\n"
+        echo -e "MariaDB is running"
         mysql --version || mariadb --version
+        echo
     fi
     if pgrep -i "psql" &>/dev/null;then
-        echo -e "PostgreSQL is running\n"
+        echo -e "PostgreSQL is running"
         postgres -V
+        echo
     fi
     if pgrep -i "mongo" &>/dev/null; then
-        echo -e "MongoDB is running\n"
+        echo -e "MongoDB is running"
         mongod -version
+        echo
     fi
     if pgrep -i "kcar" &>/dev/null;then
-        echo -e "KernelCare is running\n"
+        echo -e "KernelCare is running"
         kcarectl --info
+        echo
     fi
 }
 
@@ -339,6 +351,7 @@ database(){
 #Pull various configuration
 config(){
     /usr/local/cpanel/bin/cpconftool --modules=cpanel::smtp::exim,cpanel::system::backups,cpanel::system::whmconf,cpanel::easy::apache, --backup 2>/dev/null
+    cp /home/whm-config-backup-*.tar.gz whm-config-backup.tar.gz
     cp /etc/my.cnf ./my.cnf.back
     echo -e "${BLU}======>PHP<======${NC}"
     for php in $(whmapi1  php_get_handlers 2>/dev/null | grep "version: .*php" | gawk '{print $2}');do
