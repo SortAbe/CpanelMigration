@@ -82,7 +82,7 @@ basic(){
     fi
 
     #Install tools
-    if [[ $os = "ubuntu" ]];then
+    if [ "$os" = "ubuntu" ];then
         apt update -y &>/dev/null && apt install smartmontools dmidecode lshw util-linux -y &>/dev/null
     elif [ "$os" = "almalinux" ] || [ "$os" = "centos" ] || [ "$os" = "rockylinux" ] || [ "$os" = "cloudlinux" ];then
         yum install smartmontools -y &>/dev/null
@@ -99,6 +99,7 @@ basic(){
         dnf install python3 -y &>/dev/null
         pip3 install requests &>/dev/null
     fi
+    echo
 }
 
 #Drive Information
@@ -129,6 +130,7 @@ drives(){
     done
     echo "REMAINING PARTITIONS:"
     echo "$remaining" | grep -v "tempfs"
+    echo
 }
 
 #Versions
@@ -176,12 +178,17 @@ versions(){
     fi
 }
 
+#DOMAINS
 domain_check(){
     echo -e "${BLU}======>DOMAINS<======${NC}" | tee -a accounts.info
+    echo -e "${YLW}Only domains with errors or warnings appear here!${NC}"
     ~/CpanelMigration/domain_check.py | tee -a accounts.info
+    echo
 }
 
 #DOMAINS
+#DEPERCATED
+#Might role features into other domain check in the future.
 accounts(){
     echo -e "${BLU}======>DOMAINS<======${NC}" | tee -a accounts.info
     for acc in $(/usr/local/cpanel/bin/whmapi1 --output=jsonpretty   listaccts 2>/dev/null | grep user | gawk '{print $3}' | sed 's/[",]//g');do
@@ -249,6 +256,7 @@ accounts(){
 }
 
 #DOMAINS Extensive
+#DEPERCATED
 accounts_ext(){
     echo -e "${BLU}======>DOMAINS<======${NC}"
     for acc in $(/usr/local/cpanel/bin/whmapi1 --output=jsonpretty   listaccts 2>/dev/null | grep user | gawk '{print $3}' | sed 's/[",]//g');do
@@ -350,8 +358,10 @@ database(){
 
 #Pull various configuration
 config(){
-    /usr/local/cpanel/bin/cpconftool --modules=cpanel::smtp::exim,cpanel::system::backups,cpanel::system::whmconf,cpanel::easy::apache, --backup 2>/dev/null
-    cp /home/whm-config-backup-*.tar.gz whm-config-backup.tar.gz
+    /usr/local/cpanel/bin/cpconftool --modules=cpanel::smtp::exim,cpanel::system::backups,cpanel::system::whmconf,cpanel::easy::apache, --backup 2>/dev/null \
+        | grep "Backup Successful"
+    whm_backup=$(find /home -iname "whm-config-backup-*.tar.gz" -mmin -1)
+    cp "$whm_backup" whm_backup.tar.gz
     cp /etc/my.cnf ./my.cnf.back
     echo -e "${BLU}======>PHP<======${NC}"
     for php in $(whmapi1  php_get_handlers 2>/dev/null | grep "version: .*php" | gawk '{print $2}');do
