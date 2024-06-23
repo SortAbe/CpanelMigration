@@ -161,7 +161,7 @@ versions(){
         mysql --version || mariadb --version
         echo
     fi
-    if pgrep -i "psql" &>/dev/null;then
+    if pgrep -i "postgres" &>/dev/null;then
         echo -e "PostgreSQL is running"
         postgres -V
         echo
@@ -371,6 +371,7 @@ config(){
         echo -e "====== $php =====" >> php.modules
         /opt/cpanel/"$php"/root/usr/bin/php -m  2>/dev/null | grep -E  "^[a-zA-Z]" >> php.modules
     done
+    echo
 }
 
 if [[ $1 == "" ]];then
