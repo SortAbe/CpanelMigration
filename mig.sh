@@ -99,7 +99,6 @@ basic(){
         dnf install python3 -y &>/dev/null
         pip3 install requests &>/dev/null
     fi
-    echo
 }
 
 #Drive Information
@@ -136,42 +135,42 @@ drives(){
 #Versions
 versions(){
     echo -e "${BLU}======>VERSIONS<======${NC}"
-    if  lsof -i TCP:443 | grep -iq "httpd" || lsof -i TCP:80 | grep -iq "httpd" ;then
+    if  pgrep "httpd" &>/dev/null || pgrep "apache" &>/dev/null;then
         echo -e "Apache is running"
         httpd -v 2>/dev/null || apache2 -v 2>/dev/null
         echo
     fi
-    if  lsof -i TCP:443 | grep -iq "nginx" || lsof -i TCP:80 | grep -iq "nginx" ;then
+    if  pgrep "nginx" &>/dev/null ;then
         echo -e "Nginx is running"
         nginx -v
         echo
     fi
-    if  lsof -i TCP:443 | grep -iq "lshttp" || lsof -i TCP:80 | grep -iq "lshttp" ;then
+    if  pgrep "lshttp" &>/dev/null ;then
         echo -e "LiteSpeed is running"
         lshttpd -v
         echo
     fi
-    if pgrep -i "mysql" &>/dev/null;then
+    if pgrep "mysql" &>/dev/null || pgrep "MySQL" &>/dev/null;then
         echo -e "MySQL or MariaDB is running"
         mysql --version || mariadb --version
         echo
     fi
-    if pgrep -i "mariadb" &>/dev/null;then
+    if pgrep "mariadb" &>/dev/null || pgrep "MariaDB" &>/dev/null;then
         echo -e "MariaDB is running"
         mysql --version || mariadb --version
         echo
     fi
-    if pgrep -i "postgres" &>/dev/null;then
+    if pgrep "postgres" &>/dev/null;then
         echo -e "PostgreSQL is running"
         postgres -V
         echo
     fi
-    if pgrep -i "mongo" &>/dev/null; then
+    if pgrep "mongo" &>/dev/null; then
         echo -e "MongoDB is running"
         mongod -version
         echo
     fi
-    if pgrep -i "kcar" &>/dev/null;then
+    if pgrep "kcar" &>/dev/null;then
         echo -e "KernelCare is running"
         kcarectl --info
         echo
@@ -255,74 +254,6 @@ accounts(){
     done
 }
 
-#DOMAINS Extensive
-#DEPERCATED
-accounts_ext(){
-    echo -e "${BLU}======>DOMAINS<======${NC}"
-    for acc in $(/usr/local/cpanel/bin/whmapi1 --output=jsonpretty   listaccts 2>/dev/null | grep user | gawk '{print $3}' | sed 's/[",]//g');do
-        adom=$(/usr/local/cpanel/bin/whmapi1 accountsummary user="$acc" 2>/dev/null | grep "domain:" | gawk '{print $2}')
-        aip=$(/usr/local/cpanel/bin/whmapi1 accountsummary user="$acc" 2>/dev/null | grep "ip:" | gawk '{print $2}')
-        assl=$(grep "ssl_redirect:" /var/cpanel/userdata/"$acc"/"$adom" | gawk '{print $2}')
-        aphp=$(grep "phpversion:" /var/cpanel/userdata/"$acc"/"$adom" | gawk '{print $2}')
-        echo -e "${GRE}++++++$acc++++++${NC}"
-        #Load
-        echo -e "${YLW}====>Main: $adom${NC}"
-        if curl -vL "$adom" 2>&1 | grep -E  -q "HTTP.{2,5} 200";then
-            echo -e "${GRE}$adom loads 200${NC}"
-        else
-            echo -e "${RED}$adom did not load${NC}"
-        fi
-        #SSL
-        if [[ $assl -eq "1" ]];then
-            echo -e "${GRE}SSL redirect enabled${NC}"
-            curlout=$(curl -svL "$adom" 2>&1)
-            if echo "$curlout" | grep -E  -q "SSL certificate verify ok";then
-                echo -e "${GRE}$adom SSL is good, expires: $(echo "$curlout" | grep -E  -o "expire date:.+20[0-9]{2} [A-Z]{2,4}" | sed 's/expire date://' )${NC}"
-            else
-                echo -e "${RED}$adom SSL not working${NC}"
-            fi
-        else
-            echo -e "${RED}SSL redirect disabled${NC}"
-        fi
-        #PHP
-        echo -e "PHP version: $aphp"
-        #DNS
-        echo -e "Domain Cpanel IP: $aip"
-        echo -e "A record: $(dig @8.8.8.8 A "$adom" +short | paste -sd" ")"
-        echo -e "NS record: $(dig @8.8.8.8 NS "$adom" +short | paste -sd" ")"
-        #Account subdomains
-        for asub in $(grep "^  - " /var/cpanel/userdata/"$acc"/main | gawk '{print $2}');do
-            sssl=$(grep "ssl_redirect:" /var/cpanel/userdata/"$acc"/"$asub" | gawk '{print $2}')
-            sphp=$(grep "phpversion:" /var/cpanel/userdata/"$acc"/"$asub" | gawk '{print $2}')
-            #Load
-            echo -e "${YLW}====>Sub: $asub${NC}"
-            if curl -vL "$asub" 2>&1 | grep -E  -q "HTTP.{2,5} 200";then
-                echo -e "${GRE}$asub loads 200${NC}"
-            else
-                echo -e "${RED}$asub did not load${NC}"
-            fi
-            #SSL
-            if [[ $sssl -eq "1" ]];then
-                echo -e "${GRE}SSL redirect enabled${NC}"
-                scurlout=$(curl -svL "$asub" 2>&1)
-                if echo "$scurlout" | grep -E  -q "SSL certificate verify ok";then
-                    echo -e "${GRE}$asub SSL is good, expires: $(echo "$scurlout" | grep -E  -o "expire date:.+20[0-9]{2} [A-Z]{2,4}" | sed 's/expire date://' )${NC}"
-                else
-                    echo -e "${RED}$asub SSL not working${NC}"
-                fi
-            else
-                echo -e "${RED}SSL redirect disabled${NC}"
-            fi
-            #PHP
-            echo -e "PHP version: $sphp"
-            #DNS
-            echo -e "Domain Cpanel IP: $aip"
-            echo -e "A record: $(dig @8.8.8.8 A "$asub" +short | paste -sd" ")"
-            echo -e "NS record: $(dig @8.8.8.8 NS "$asub" +short | paste -sd" ")"
-        done
-    done
-}
-
 #DATABASES
 database(){
     echo -e "${BLU}======>DATABASES<======${NC}"
@@ -362,7 +293,7 @@ config(){
         | grep "Backup Successful"
     whm_backup=$(find /home -iname "whm-config-backup-*.tar.gz" -mmin -1)
     cp "$whm_backup" whm_backup.tar.gz
-    cp /etc/my.cnf ./my.cnf.back
+    cp /etc/my.cnf ./my.cnf
     echo -e "${BLU}======>PHP<======${NC}"
     for php in $(whmapi1  php_get_handlers 2>/dev/null | grep "version: .*php" | gawk '{print $2}');do
         printf "%s Handler " "$php"
